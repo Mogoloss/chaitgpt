@@ -1,8 +1,0 @@
-{
-  "model": "minimaxai/minimax-m2.5",
-  "messages": [
-    {"role": "user", "content": "Reply with exactly OK."}
-  ],
-  "stream": false,
-  "max_tokens": 8
-}

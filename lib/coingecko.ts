@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { formatCompactCurrency, formatCurrency, formatPercent } from "@/lib/format";
+import { formatCurrency, formatPercent } from "@/lib/format";
 import type {
   AiAnalysis,
   CoinMarket,
@@ -50,7 +50,7 @@ async function fetchJson<T>(path: string): Promise<T> {
 function deriveMarketMood(change: number) {
   if (change > 2) return "趋势偏强";
   if (change > 0) return "温和回暖";
-  if (change > -2) return "谨慎中性";
+  if (change > -2) return "谨慎观望";
   return "风险偏好下降";
 }
 
@@ -91,7 +91,7 @@ function buildIndices(featuredCoins: CoinMarket[], summary: DashboardData["marke
       score: trendStrengthScore,
       valueLabel: `${trendStrengthScore}/100`,
       trend: trendStrengthScore >= 60 ? "up" : trendStrengthScore <= 40 ? "down" : "neutral",
-      summary: "综合主流币涨跌幅得到的市场强弱评分。"
+      summary: "综合主流币涨跌幅后的市场强弱评分。"
     },
     {
       key: "breadth",
@@ -99,7 +99,7 @@ function buildIndices(featuredCoins: CoinMarket[], summary: DashboardData["marke
       score: breadthScore,
       valueLabel: `${breadthScore}/100`,
       trend: breadthScore >= 60 ? "up" : breadthScore <= 40 ? "down" : "neutral",
-      summary: "上涨主流币家数越多，说明行情扩散越健康。"
+      summary: "上涨主流币越多，说明行情扩散越健康。"
     },
     {
       key: "liquidity",
@@ -131,7 +131,7 @@ function buildIndices(featuredCoins: CoinMarket[], summary: DashboardData["marke
       score: volatilityRiskScore,
       valueLabel: `${volatilityAverage.toFixed(2)}%`,
       trend: volatilityRiskScore >= 60 ? "down" : "neutral",
-      summary: "波动越大，越需要把风控放在首位。"
+      summary: "波动越大，越需要把风控放在第一位。"
     },
     {
       key: "rotation",
@@ -139,7 +139,7 @@ function buildIndices(featuredCoins: CoinMarket[], summary: DashboardData["marke
       score: rotationScore,
       valueLabel: `${rotationScore}/100`,
       trend: rotationScore >= 60 ? "up" : rotationScore <= 40 ? "down" : "neutral",
-      summary: "对 BTC 与 ETH 的相对强弱和广度做出的轮动评分。"
+      summary: "根据 BTC 与 ETH 的相对强弱和市场广度计算轮动评分。"
     }
   ];
 }
@@ -170,14 +170,14 @@ function buildDirection(indices: MarketIndex[]): DirectionAnalysis {
     return {
       bias: "看空",
       confidence,
-      summary: "当前指数组合偏弱，短线更适合先防守，再等待结构修复。"
+      summary: "当前指标组合偏弱，短线更适合先防守，再等待结构修复。"
     };
   }
 
   return {
     bias: "中性",
     confidence,
-    summary: "当前指数组合更接近震荡观察，方向暂未形成一致性。"
+    summary: "当前指标组合更接近震荡观察，方向暂未形成一致性。"
   };
 }
 
@@ -189,28 +189,25 @@ function buildAiAnalysis(
 ): AiAnalysis {
   const btc = featuredCoins.find((coin) => coin.symbol.toLowerCase() === "btc") ?? featuredCoins[0];
   const eth = featuredCoins.find((coin) => coin.symbol.toLowerCase() === "eth") ?? featuredCoins[1];
-  const topTrend = indices.find((index) => index.key === "trend-strength");
-  const topBreadth = indices.find((index) => index.key === "breadth");
+  const trendIndex = indices.find((index) => index.key === "trend-strength");
+  const breadthIndex = indices.find((index) => index.key === "breadth");
   const riskIndex = indices.find((index) => index.key === "volatility");
 
   return {
     headline: `实时方向结论：${direction.bias}`,
-    summary: `AI 综合 ${topTrend?.name}、${topBreadth?.name}、BTC Dominance 与成交额判断，当前更适合采取“${direction.bias}”视角。${direction.summary}`,
-    shortTerm: `短线更应该盯住 BTC 在 ${formatCurrency(btc.low_24h, 0)} - ${formatCurrency(
-      btc.high_24h,
-      0
-    )} 区间内的选择方向，以及 ETH 是否同步跟随。`,
-    midTerm: "中期继续观察主流币是否维持扩散。如果 ETH 明显弱于 BTC，通常说明风险偏好还没真正回到进攻状态。",
+    summary: `AI 综合 ${trendIndex?.name}、${breadthIndex?.name}、BTC Dominance 与成交额表现，当前更适合采取“${direction.bias}”视角。${direction.summary}`,
+    shortTerm: `短线应重点观察 BTC 在 ${formatCurrency(btc.low_24h, 0)} 到 ${formatCurrency(btc.high_24h, 0)} 区间内的选择方向，以及 ETH 是否同步跟随。`,
+    midTerm: "中期继续观察主流币是否保持扩散。如果 ETH 明显弱于 BTC，通常说明风险偏好还没有真正回到进攻状态。",
     risk: `当前波动风险指数为 ${riskIndex?.score ?? 0}/100，全市场 24H 市值变化为 ${formatPercent(
       summary.marketCapChange24h
     )}。高波动时不宜只看 AI 偏向，还要同步约束仓位与止损。`,
     actions: [
       "行情数据每 15 秒刷新一次，优先观察价格与方向结论是否共振。",
-      `重点追踪 BTC 当前价格 ${formatCurrency(btc.current_price, 0)} 与 ETH 当前价格 ${formatCurrency(
+      `重点跟踪 BTC 当前价格 ${formatCurrency(btc.current_price, 0)} 与 ETH 当前价格 ${formatCurrency(
         eth.current_price,
         0
       )} 的联动关系。`,
-      "若趋势强度和广度同时回升，再考虑提高进攻性；若波动风险抬升，则优先收缩风险敞口。"
+      "如果趋势强度和市场广度同步回升，再考虑提高进攻性；如果波动风险抬升，则优先收缩风险敞口。"
     ]
   };
 }

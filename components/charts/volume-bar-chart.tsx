@@ -50,7 +50,7 @@ export function VolumeBarChart({ data }: Props) {
             const numericValue = Number(value ?? 0);
 
             if (name === "volume") {
-              return [formatCompactCurrency(numericValue), "24H 成交量"];
+              return [formatCompactCurrency(numericValue), "24H 成交额"];
             }
 
             return [formatPercent(numericValue), "24H 涨跌幅"];

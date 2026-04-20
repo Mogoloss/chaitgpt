@@ -32,8 +32,10 @@ export type MarketIndex = {
   summary: string;
 };
 
+export type DirectionBias = "看多" | "中性" | "看空";
+
 export type DirectionAnalysis = {
-  bias: "看多" | "中性" | "看空";
+  bias: DirectionBias;
   confidence: number;
   summary: string;
 };

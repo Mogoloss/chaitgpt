@@ -12,6 +12,12 @@ function getTrendClass(trend: MarketIndex["trend"]) {
   return "muted";
 }
 
+function getTrendLabel(trend: MarketIndex["trend"]) {
+  if (trend === "up") return "偏强";
+  if (trend === "down") return "偏弱";
+  return "中性";
+}
+
 export function MarketDashboard({ data }: Props) {
   const topIndices = data.indices.slice(0, 4);
 
@@ -22,7 +28,7 @@ export function MarketDashboard({ data }: Props) {
           <p className="eyebrow">Live Crypto View</p>
           <h1>主流币指数与实时方向</h1>
           <p className="hero-copy compact-copy">
-            行情、指数和 AI 方向都会跟随最新数据实时刷新。当前页面每 {data.liveRefreshSeconds} 秒自动更新一次。
+            行情、指标和 AI 判断都会跟随最新数据实时刷新。当前页面每 {data.liveRefreshSeconds} 秒自动更新一次。
           </p>
         </div>
 
@@ -92,7 +98,7 @@ export function MarketDashboard({ data }: Props) {
         <div className="section-head">
           <div>
             <p className="eyebrow">Indices</p>
-            <h2>核心指数</h2>
+            <h2>核心指标</h2>
           </div>
           <span className="muted">实时计算</span>
         </div>
@@ -101,9 +107,7 @@ export function MarketDashboard({ data }: Props) {
             <article className="index-card" key={index.key}>
               <span className="mini-label">{index.name}</span>
               <strong className="index-score">{index.score}/100</strong>
-              <span className={getTrendClass(index.trend)}>
-                {index.trend === "up" ? "偏强" : index.trend === "down" ? "偏弱" : "中性"}
-              </span>
+              <span className={getTrendClass(index.trend)}>{getTrendLabel(index.trend)}</span>
               <p className="muted">{index.summary}</p>
             </article>
           ))}
@@ -129,18 +133,14 @@ export function MarketDashboard({ data }: Props) {
                     <span className="mini-label">{coin.name}</span>
                   </div>
                 </div>
-                <span
-                  className={
-                    coin.price_change_percentage_24h >= 0 ? "change-up" : "change-down"
-                  }
-                >
+                <span className={coin.price_change_percentage_24h >= 0 ? "change-up" : "change-down"}>
                   {formatPercent(coin.price_change_percentage_24h)}
                 </span>
               </div>
               <strong className="ticker-price">
                 {formatCurrency(coin.current_price, coin.current_price < 10 ? 2 : 0)}
               </strong>
-              <span className="metric-sub">成交量 {formatCompactCurrency(coin.total_volume)}</span>
+              <span className="metric-sub">成交额 {formatCompactCurrency(coin.total_volume)}</span>
             </article>
           ))}
         </div>
